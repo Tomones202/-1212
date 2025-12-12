@@ -1,12 +1,11 @@
-
-
 import { GoogleGenAI, GenerateContentResponse, Type, Modality, Part, FunctionDeclaration } from "@google/genai";
 import { SmartSequenceItem, VideoGenerationMode } from "../types";
 
 // --- Initialization ---
 
 export const getGeminiKey = (): string | null => {
-    return localStorage.getItem('gemini_api_key') || process.env.API_KEY || null;
+    const key = localStorage.getItem('gemini_api_key') || process.env.API_KEY;
+    return key ? key.trim() : null;
 };
 
 const getClient = () => {
@@ -215,7 +214,7 @@ export const extractLastFrame = (videoSrc: string): Promise<string> => {
 // --- System Prompts ---
 
 const SYSTEM_INSTRUCTION = `
-You are SunStudio AI, an expert multimedia creative assistant.
+You are amazonfbdeal AI, an expert multimedia creative assistant.
 Your goal is to assist users in generating images, videos, audio, and scripts.
 Always be concise, professional, and helpful.
 When the user asks for creative ideas, provide vivid, detailed descriptions suitable for generative AI prompts.
@@ -340,8 +339,7 @@ export const sendChatMessage = async (
     let systemInstruction = SYSTEM_INSTRUCTION;
 
     if (options?.isThinkingMode) {
-        modelName = 'gemini-2.5-flash'; // Or 'gemini-2.0-flash-thinking-exp-1219' if available
-        // Thinking mode logic (mocked by model selection/config here if supported)
+        modelName = 'gemini-3-pro-preview'; // Deep Thinking
     }
 
     if (options?.isStoryboard) {
@@ -404,10 +402,6 @@ export const generateImageFromText = async (
             }
         }
 
-        // Handle count (Gemini often generates 1, looping if needed or if API supports count)
-        // Since Gemini Flash Image usually returns 1, we might need to call multiple times if count > 1
-        // But for simplicity/speed, we return what we got. 
-        
         if (images.length === 0) {
             throw new Error("No images generated. Safety filter might have been triggered.");
         }

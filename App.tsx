@@ -1,5 +1,3 @@
-
-
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Node } from './components/Node';
 import { SidebarDock } from './components/SidebarDock';
@@ -16,7 +14,7 @@ import { saveToStorage, loadFromStorage } from './services/storage';
 import { 
     Plus, Copy, Trash2, Type, Image as ImageIcon, Video as VideoIcon, 
     ScanFace, Brush, MousePointerClick, LayoutTemplate, X, Film, Link, RefreshCw, Upload,
-    Minus, FolderHeart, Unplug, Sparkles, ChevronLeft, ChevronRight, Scan, Music, Mic2
+    Minus, FolderHeart, Unplug, Sparkles, ChevronLeft, ChevronRight, Scan, Music, Mic2, Loader2
 } from 'lucide-react';
 
 // Apple Physics Curve
@@ -34,10 +32,12 @@ const getImageDimensions = (src: string): Promise<{width: number, height: number
     });
 };
 
-// Expanded View Component (Modal)
+// --- Expanded View Component (Modal) ---
 const ExpandedView = ({ media, onClose }: { media: any, onClose: () => void }) => {
     const [visible, setVisible] = useState(false);
     const [currentIndex, setCurrentIndex] = useState(0);
+    const [videoBlobUrl, setVideoBlobUrl] = useState<string | null>(null);
+    const [isLoadingVideo, setIsLoadingVideo] = useState(false);
     
     useEffect(() => {
         if (media) {
@@ -80,6 +80,37 @@ const ExpandedView = ({ media, onClose }: { media: any, onClose: () => void }) =
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [visible, handleClose, handleNext, handlePrev]);
 
+    // Handle Video Blob Fetching for Expanded View
+    useEffect(() => {
+        if (!media) return;
+        const currentSrc = hasMultiple ? media.images[currentIndex] : media.src;
+        const isVideo = (media.type === 'video') && !(currentSrc && currentSrc.startsWith('data:image'));
+
+        if (isVideo) {
+            if (currentSrc.startsWith('blob:') || currentSrc.startsWith('data:')) {
+                setVideoBlobUrl(currentSrc);
+                return;
+            }
+            setIsLoadingVideo(true);
+            let active = true;
+            fetch(currentSrc)
+                .then(res => res.blob())
+                .then(blob => {
+                    if (active) {
+                        // FORCE VIDEO/MP4
+                        const mp4Blob = new Blob([blob], { type: 'video/mp4' });
+                        setVideoBlobUrl(URL.createObjectURL(mp4Blob));
+                        setIsLoadingVideo(false);
+                    }
+                })
+                .catch(() => { if (active) setIsLoadingVideo(false); });
+            return () => { active = false; };
+        } else {
+            setVideoBlobUrl(null);
+        }
+    }, [media, currentIndex, hasMultiple]);
+
+
     if (!media) return null;
     
     // Determine current source and type
@@ -108,17 +139,21 @@ const ExpandedView = ({ media, onClose }: { media: any, onClose: () => void }) =
                             draggable={false} 
                         />
                     ) : (
-                        <video 
-                            key={currentSrc} 
-                            src={currentSrc} 
-                            className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl animate-in fade-in duration-300 bg-[#0a0a0c]" 
-                            controls 
-                            autoPlay 
-                            muted
-                            loop
-                            playsInline
-                            preload="auto"
-                        />
+                        // If video blob is ready, show it. If loading, show loader.
+                        isLoadingVideo || !videoBlobUrl ? (
+                            <div className="w-[60vw] h-[40vh] flex items-center justify-center bg-black/50 rounded-lg">
+                                <Loader2 className="animate-spin text-white" size={48} />
+                            </div>
+                        ) : (
+                            <video 
+                                key={videoBlobUrl} 
+                                src={videoBlobUrl} 
+                                className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl animate-in fade-in duration-300 bg-black" 
+                                controls 
+                                autoPlay 
+                                playsInline
+                            />
+                        )
                     )}
                     
                     {hasMultiple && (
@@ -144,7 +179,8 @@ const ExpandedView = ({ media, onClose }: { media: any, onClose: () => void }) =
                 )}
 
              </div>
-             <button onClick={handleClose} className="absolute top-6 right-6 p-3 bg-white/10 hover:bg-white/20 rounded-full text-white backdrop-blur-md transition-colors z-[110]"><X size={24} /></button>
+             {/* Apple Style: Close Button on Left */}
+             <button onClick={handleClose} className="absolute top-6 left-6 p-3 bg-white/10 hover:bg-white/20 rounded-full text-white backdrop-blur-md transition-colors z-[110]"><X size={24} /></button>
         </div>
     );
 };
@@ -977,7 +1013,7 @@ export const App = () => {
                 {/* ... (Welcome Screen) ... */}
                 <div className="flex flex-col items-center justify-center mb-10 select-none animate-in fade-in slide-in-from-bottom-8 duration-1000">
                     <div className="relative">
-                        <h1 className="text-6xl md:text-8xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white via-zinc-300 to-zinc-600 drop-shadow-sm px-4 pb-2">SUNSTUDIO</h1>
+                        <h1 className="text-6xl md:text-8xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white via-zinc-300 to-zinc-600 drop-shadow-sm px-4 pb-2">amazonfbdeal</h1>
                         <div className="absolute -inset-10 bg-gradient-to-r from-cyan-500/20 via-purple-500/20 to-blue-500/20 blur-[60px] opacity-20 pointer-events-none mix-blend-screen"></div>
                     </div>
                     <div className="flex items-center gap-4 mt-4">
