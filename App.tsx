@@ -8,7 +8,7 @@ import { SmartSequenceDock } from './components/SmartSequenceDock';
 import { SonicStudio } from './components/SonicStudio'; 
 import { SettingsModal } from './components/SettingsModal';
 import { AppNode, NodeType, NodeStatus, Connection, ContextMenuState, Group, Workflow, SmartSequenceItem } from './types';
-import { generateImageFromText, generateVideo, analyzeVideo, editImageWithText, planStoryboard, orchestrateVideoPrompt, compileMultiFramePrompt, urlToBase64, extractLastFrame, generateAudio } from './services/geminiService';
+import { getGeminiKey, generateImageFromText, generateVideo, analyzeVideo, editImageWithText, planStoryboard, orchestrateVideoPrompt, compileMultiFramePrompt, urlToBase64, extractLastFrame, generateAudio } from './services/geminiService';
 import { getGenerationStrategy } from './services/videoStrategies';
 import { saveToStorage, loadFromStorage } from './services/storage';
 import { 
@@ -301,6 +301,13 @@ export const App = () => {
   // --- Persistence ---
   useEffect(() => {
       if (window.aistudio) window.aistudio.hasSelectedApiKey().then(hasKey => { if (!hasKey) window.aistudio.openSelectKey(); });
+      
+      // Auto-open settings if no key (Deployment Logic)
+      const currentKey = getGeminiKey();
+      if (!currentKey) {
+          setTimeout(() => setIsSettingsOpen(true), 500);
+      }
+
       const loadData = async () => {
           try {
             const sAssets = await loadFromStorage<any[]>('assets'); if (sAssets) setAssetHistory(sAssets);
@@ -327,6 +334,7 @@ export const App = () => {
       saveToStorage('groups', groups);
   }, [assetHistory, workflows, nodes, connections, groups, isLoaded]);
 
+  // ... (Rest of the component remains unchanged)
   
   const getApproxNodeHeight = (node: AppNode) => {
       if (node.height) return node.height;
